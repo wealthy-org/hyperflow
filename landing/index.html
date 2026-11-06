@@ -1,0 +1,954 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Hypeflow</title>
+<meta name="description" content="Hypeflow brings token locks, vesting, and streaming to Elysium. Set an unlock schedule and share the onchain proof.">
+<link rel="icon" href="logo.jpeg">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Geist:wght@300;400;500;600;700&family=Geist+Mono:wght@400;500&family=Instrument+Serif:ital@0;1&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#020B0A; --bg-2:#041210; --surface:rgba(10,36,33,.55); --surface-solid:#0A2421;
+  --mint:#97F7DB; --mint-2:#C9FFEE; --mint-dim:#5FC4A8;
+  --text:#EAFFF8; --text-2:#BFE0D7; --muted:#7FA8A0; --faint:#4E7570;
+  --line:rgba(151,247,219,.1); --line-2:rgba(151,247,219,.2);
+  --ease:cubic-bezier(.2,.8,.2,1); --ease-out:cubic-bezier(.16,1,.3,1);
+  --sans:'Geist',system-ui,sans-serif; --serif:'Instrument Serif',Georgia,serif; --mono:'Geist Mono',ui-monospace,monospace;
+  --max:1280px; --gutter:clamp(16px,4vw,56px);
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html{scroll-behavior:smooth;-webkit-text-size-adjust:100%}
+body{background:var(--bg);color:var(--text);font-family:var(--sans);font-size:15px;line-height:1.6;overflow-x:hidden;-webkit-font-smoothing:antialiased}
+a{color:inherit;text-decoration:none}
+img,svg,canvas{display:block;max-width:100%}
+button{font:inherit;color:inherit;background:none;border:0;cursor:pointer}
+::selection{background:var(--mint);color:var(--bg)}
+:focus-visible{outline:2px solid var(--mint);outline-offset:3px;border-radius:6px}
+.grain{position:fixed;inset:0;z-index:100;pointer-events:none;opacity:.045;background-image:url("data:image/svg+xml,%3Csvg viewBox='0 0 400 400' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.8' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E")}
+
+.wrap{position:relative;max-width:var(--max);margin:0 auto;padding:0 var(--gutter)}
+.eyebrow{font-family:var(--mono);font-size:11px;letter-spacing:.18em;text-transform:uppercase;color:var(--muted);display:inline-flex;align-items:center;gap:12px}
+.eyebrow::before{content:"";width:28px;height:1px;background:currentColor;opacity:.6}
+.h2{font-weight:600;font-size:clamp(40px,6.2vw,92px);line-height:.95;letter-spacing:-.05em;margin-top:22px}
+.h2 em{font-family:var(--serif);font-weight:400;font-style:italic;letter-spacing:-.02em;color:var(--mint)}
+.lead{color:var(--muted);max-width:440px;font-size:16px}
+
+/* ---- Buttons ---- */
+.btn{display:inline-flex;align-items:center;gap:10px;min-height:48px;padding:0 24px;border-radius:999px;font-size:14px;font-weight:500;transition:transform .3s var(--ease),background .2s,border-color .2s,box-shadow .3s;border:1px solid transparent;white-space:nowrap}
+.btn svg{width:16px;height:16px;transition:transform .3s var(--ease)}
+.btn:hover svg{transform:translateX(3px)}
+.btn-primary{background:var(--mint);color:var(--bg);box-shadow:0 0 0 0 rgba(151,247,219,0)}
+.btn-primary:hover{background:var(--mint-2);box-shadow:0 10px 40px -10px rgba(151,247,219,.6)}
+.btn-ghost{background:rgba(151,247,219,.05);border-color:var(--line-2);color:var(--text);backdrop-filter:blur(10px)}
+.btn-ghost:hover{border-color:var(--mint)}
+
+/* ---- Nav ---- */
+nav.fx{position:fixed;top:16px;left:0;right:0;z-index:40;padding:0 16px}
+.nav-pill{max-width:880px;margin:0 auto;display:flex;align-items:center;justify-content:space-between;gap:16px;padding:8px 8px 8px 14px;border:1px solid rgba(151,247,219,.14);border-radius:999px;background:rgba(4,19,17,.55);backdrop-filter:blur(16px);-webkit-backdrop-filter:blur(16px);box-shadow:0 20px 60px -30px #000}
+.brand{display:flex;align-items:center;gap:10px;font-weight:500;font-size:18px;letter-spacing:-.02em}
+.brand img{width:30px;height:30px;border-radius:8px}
+.nav-links{display:none;gap:28px;font-size:13px;color:var(--muted)}
+.nav-links a{transition:color .2s}
+.nav-links a:hover{color:var(--text)}
+.nav-pill .btn{min-height:38px;font-size:13px;padding:0 16px}
+@media(min-width:860px){.nav-links{display:flex}}
+
+/* ================= HERO ================= */
+.hx{position:relative;height:100svh;min-height:640px;overflow:hidden;background:var(--bg);isolation:isolate}
+.hx canvas{position:absolute;inset:0;width:100%;height:100%;z-index:0}
+.hx::after{content:"";position:absolute;inset:0;z-index:1;pointer-events:none;
+  background:radial-gradient(120% 90% at 65% 45%,transparent 35%,rgba(2,11,10,.55) 70%,var(--bg) 100%),linear-gradient(180deg,rgba(2,11,10,.6) 0%,transparent 18%,transparent 62%,var(--bg) 100%)}
+.hx-ui{position:absolute;inset:0;z-index:2;max-width:1440px;margin:0 auto;padding:0 clamp(16px,3vw,40px)}
+.live{position:absolute;top:96px;right:clamp(16px,3vw,40px);display:inline-flex;align-items:center;gap:10px;font-family:var(--mono);font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:var(--text);border:1px solid rgba(151,247,219,.18);background:rgba(4,19,17,.5);backdrop-filter:blur(10px);padding:9px 14px;border-radius:8px}
+.live i{width:6px;height:6px;border-radius:50%;background:var(--mint);animation:pulse 2.2s ease-out infinite}
+.hx-title{position:absolute;left:clamp(16px,6vw,120px);bottom:200px;max-width:min(900px,92vw)}
+.hx-est{display:flex;align-items:center;gap:14px;font-family:var(--mono);font-size:12px;letter-spacing:.2em;color:var(--text-2);text-transform:uppercase;margin-bottom:18px}
+.hx-est::before{content:"";width:40px;height:1px;background:var(--text-2);opacity:.6}
+.hx h1{font-weight:600;text-transform:uppercase;letter-spacing:-.055em;line-height:.84;font-size:clamp(64px,min(11.5vw,17vh),190px);color:#F2FFFB}
+.hx h1 .row{display:block;white-space:nowrap}
+.hx h1 .serif{font-family:var(--serif);font-style:italic;font-weight:400;text-transform:none;letter-spacing:-.02em;color:var(--mint);opacity:.75;font-size:.92em;margin-right:.08em;position:relative;top:.04em}
+.glass{border:1px solid rgba(151,247,219,.14);background:rgba(4,19,17,.5);backdrop-filter:blur(18px);-webkit-backdrop-filter:blur(18px);box-shadow:0 30px 80px -30px #000}
+.hx-card{position:absolute;right:clamp(16px,6vw,120px);bottom:200px;width:380px;padding:28px;border-radius:18px}
+.hx-card p{font-size:19px;line-height:1.45;color:var(--text);font-weight:300;letter-spacing:-.01em}
+.stats{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin:24px 0;padding-top:22px;border-top:1px solid rgba(151,247,219,.14)}
+.stats span{display:block;font-family:var(--mono);font-size:10px;letter-spacing:.16em;color:var(--muted);text-transform:uppercase}
+.stats b{font-size:26px;font-weight:500;letter-spacing:-.02em}
+a.go{display:flex;justify-content:space-between;align-items:center;padding:12px 0;border-bottom:1px solid rgba(151,247,219,.3);font-weight:500;transition:color .2s,border-color .2s}
+a.go svg{width:18px;height:18px;transition:transform .3s var(--ease)}
+a.go:hover svg{transform:translateX(4px)}
+a.go:hover{border-color:var(--mint);color:var(--mint)}
+.hx-widget{position:absolute;left:clamp(16px,3vw,40px);bottom:28px;width:250px}
+.hx-widget .lbl{font-family:var(--mono);font-size:10px;letter-spacing:.16em;color:var(--muted);text-transform:uppercase;margin-bottom:8px}
+.hx-widget .box{border-radius:12px;padding:14px 16px}
+.hx-widget .top{display:flex;justify-content:space-between;font-size:13px}
+.hx-widget .top b{font-family:var(--mono);color:var(--mint);font-weight:500}
+.bar{height:3px;border-radius:3px;background:rgba(151,247,219,.12);margin:10px 0 14px;overflow:hidden}
+.bar i{display:block;height:100%;width:0;background:linear-gradient(90deg,var(--mint-dim),var(--mint));box-shadow:0 0 10px var(--mint);border-radius:3px}
+.hx-widget .row2{display:grid;grid-template-columns:1fr 1fr;font-family:var(--mono);font-size:13px}
+.hx-widget .row2 span{display:block;font-size:9px;letter-spacing:.14em;color:var(--faint);text-transform:uppercase}
+.hx-scroll{position:absolute;left:50%;bottom:22px;transform:translateX(-50%);display:flex;flex-direction:column;align-items:center;gap:10px;font-family:var(--mono);font-size:10px;letter-spacing:.3em;color:var(--muted)}
+.hx-scroll i{width:1px;height:44px;background:linear-gradient(var(--mint),transparent);animation:drip 2.2s var(--ease) infinite;transform-origin:top}
+@keyframes drip{0%{transform:scaleY(0);opacity:1}60%{transform:scaleY(1);opacity:1}100%{transform:scaleY(1);opacity:0}}
+@keyframes cinematic{0%{transform:scale(1.25);filter:blur(18px);opacity:0}25%{opacity:1}100%{transform:scale(1);filter:blur(0);opacity:1}}
+@keyframes rise{from{opacity:0;transform:translateY(40px);filter:blur(10px)}to{opacity:1;transform:none;filter:none}}
+@keyframes pulse{0%{box-shadow:0 0 0 0 rgba(151,247,219,.6)}100%{box-shadow:0 0 0 10px rgba(151,247,219,0)}}
+.js .hx canvas{animation:cinematic 3.2s var(--ease) both}
+.js .hx-title .hx-est,.js .hx-title .row,.js .hx-card,.js .hx-widget,.js .live{animation:rise 1.2s var(--ease) both}
+.js .hx-title .row:nth-child(1){animation-delay:.5s}.js .hx-title .row:nth-child(2){animation-delay:.65s}
+.js .hx-title .hx-est{animation-delay:.35s}.js .hx-card{animation-delay:.9s}.js .hx-widget{animation-delay:1.1s}.js .live{animation-delay:1.2s}
+@media(max-width:1100px){.hx-card{width:320px}.hx-card p{font-size:16px}}
+@media(max-width:900px){
+  .hx{height:auto;min-height:100svh;padding:120px 0 40px}
+  .hx-ui{position:relative;display:flex;flex-direction:column;gap:28px;min-height:calc(100svh - 160px);justify-content:flex-end}
+  .hx-title,.hx-card,.hx-widget,.live{position:relative;left:auto;right:auto;bottom:auto;top:auto;width:auto;max-width:100%}
+  .live{align-self:flex-start;order:-1}
+  .hx h1{font-size:clamp(52px,16vw,110px)}
+  .hx-widget,.hx-scroll{display:none}
+}
+
+/* ================= MARQUEE ================= */
+.marquee{position:relative;overflow:hidden;padding:clamp(28px,4vw,48px) 0;border-block:1px solid var(--line);
+  mask-image:linear-gradient(90deg,transparent,#000 10%,#000 90%,transparent);-webkit-mask-image:linear-gradient(90deg,transparent,#000 10%,#000 90%,transparent)}
+.marquee-track{display:flex;align-items:center;gap:clamp(28px,4vw,56px);width:max-content;animation:ticker 40s linear infinite;font-size:clamp(32px,5vw,72px);font-weight:600;letter-spacing:-.04em;white-space:nowrap}
+.marquee-track em{font-family:var(--serif);font-weight:400;color:var(--mint)}
+.marquee-track .o{color:transparent;-webkit-text-stroke:1px rgba(151,247,219,.45)}
+.marquee-track svg{width:.5em;height:.5em;color:var(--mint);flex:none}
+@keyframes ticker{to{transform:translateX(-50%)}}
+
+/* ================= SECTIONS ================= */
+section{position:relative;padding:clamp(100px,14vw,180px) 0}
+.glow{position:absolute;pointer-events:none;border-radius:50%;filter:blur(80px);opacity:.5;background:radial-gradient(circle,rgba(151,247,219,.22),transparent 65%)}
+.sec-head{display:grid;gap:28px;margin-bottom:clamp(48px,7vw,88px)}
+@media(min-width:960px){.sec-head{grid-template-columns:1.4fr .8fr;align-items:end}}
+
+/* Word-mask heading reveal */
+.split .w{display:inline-block;overflow:hidden;vertical-align:top;padding-bottom:.08em;margin-bottom:-.08em}
+.split .w>span{display:inline-block;transform:translateY(105%);transition:transform 1.1s var(--ease-out)}
+.split.in .w>span{transform:none}
+.js .fade{opacity:0;transform:translateY(30px);transition:opacity 1.1s var(--ease-out),transform 1.1s var(--ease-out)}
+.js .fade.in{opacity:1;transform:none}
+
+/* ================= HOW: sticky scroll scene ================= */
+.scrolly{padding:0}
+.scrolly-track{height:330vh;position:relative}
+.scrolly-sticky{position:sticky;top:0;height:100vh;display:flex;align-items:center;overflow:hidden}
+.scrolly-grid{display:grid;grid-template-columns:1fr 1.1fr;gap:clamp(40px,6vw,96px);align-items:center;width:100%}
+.steps-list{list-style:none;margin-top:48px;position:relative;padding-left:28px}
+.rail{position:absolute;left:0;top:6px;bottom:6px;width:1px;background:var(--line-2)}
+.rail i{position:absolute;left:0;top:0;width:1px;height:0;background:var(--mint);box-shadow:0 0 12px var(--mint)}
+.steps-list li{padding:14px 0;opacity:.32;transition:opacity .5s var(--ease)}
+.steps-list li.on{opacity:1}
+.steps-list .n{font-family:var(--mono);font-size:11px;color:var(--mint);letter-spacing:.14em}
+.steps-list h3{font-size:clamp(22px,2.2vw,30px);font-weight:500;letter-spacing:-.03em;margin:4px 0}
+.steps-list p{color:var(--muted);font-size:14px;max-width:400px;max-height:0;overflow:hidden;transition:max-height .6s var(--ease),opacity .5s;opacity:0}
+.steps-list li.on p{max-height:120px;opacity:1}
+.stage{position:relative;aspect-ratio:1/1;max-height:76vh;width:100%}
+.stage::before{content:"";position:absolute;inset:8%;border-radius:50%;background:radial-gradient(circle,rgba(151,247,219,.16),transparent 65%);filter:blur(40px)}
+.scene{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;opacity:0;transform:translateY(40px) scale(.96);filter:blur(10px);transition:opacity .8s var(--ease-out),transform .8s var(--ease-out),filter .8s var(--ease-out);pointer-events:none}
+.scene.on{opacity:1;transform:none;filter:none;pointer-events:auto}
+.panel{width:min(460px,100%);border-radius:22px;padding:26px;position:relative}
+.panel-h{display:flex;justify-content:space-between;align-items:center;margin-bottom:22px;font-family:var(--mono);font-size:11px;letter-spacing:.12em;text-transform:uppercase;color:var(--muted)}
+.ok{display:inline-flex;align-items:center;gap:8px;color:var(--mint)}
+.ok i{width:7px;height:7px;border-radius:50%;background:var(--mint);animation:pulse 2.2s ease-out infinite}
+.tok{display:flex;align-items:center;gap:14px;margin-bottom:22px}
+.tok-ic{width:48px;height:48px;border-radius:14px;background:conic-gradient(from 200deg,#97F7DB,#2B8F78,#97F7DB);display:grid;place-items:center;color:var(--bg);font-weight:700}
+.tok b{display:block;font-size:20px;font-weight:500;letter-spacing:-.02em}
+.tok span{font-family:var(--mono);font-size:12px;color:var(--muted)}
+.rows{display:grid}
+.rows>div{display:flex;justify-content:space-between;gap:16px;padding:12px 0;border-top:1px solid var(--line);font-size:13px}
+.rows dt{color:var(--muted)}
+.rows dd{font-family:var(--mono);font-size:12.5px;color:var(--text-2);text-align:right}
+.scene .rows>div{opacity:0;transform:translateX(-12px);transition:all .6s var(--ease-out)}
+.scene.on .rows>div{opacity:1;transform:none}
+.scene.on .rows>div:nth-child(2){transition-delay:.1s}.scene.on .rows>div:nth-child(3){transition-delay:.2s}.scene.on .rows>div:nth-child(4){transition-delay:.3s}.scene.on .rows>div:nth-child(5){transition-delay:.4s}
+.field{border:1px solid var(--line-2);border-radius:12px;padding:10px 14px;margin-bottom:10px;background:rgba(2,11,10,.4)}
+.field span{display:block;font-family:var(--mono);font-size:9.5px;letter-spacing:.14em;text-transform:uppercase;color:var(--faint)}
+.field b{display:inline-block;font-family:var(--mono);font-weight:400;font-size:14px;color:var(--text);white-space:nowrap;overflow:hidden;max-width:0;vertical-align:bottom;transition:max-width 1s steps(28)}
+.scene.on .field b{max-width:100%}
+.scene.on .field:nth-child(2) b{transition-delay:.5s}.scene.on .field:nth-child(3) b{transition-delay:1s}.scene.on .field:nth-child(4) b{transition-delay:1.5s}
+.two{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.steps-btn{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:8px}
+.steps-btn div{border-radius:12px;padding:12px;text-align:center;font-size:13px;font-weight:500;border:1px solid var(--line-2);color:var(--muted);transition:all .5s var(--ease) 2.1s}
+.scene.on .steps-btn div:first-child{background:rgba(151,247,219,.1);color:var(--mint);border-color:var(--mint)}
+.scene.on .steps-btn div:last-child{background:var(--mint);color:var(--bg);border-color:var(--mint);transition-delay:2.6s}
+.seal{width:84px;height:84px;margin:4px auto 18px;border-radius:50%;display:grid;place-items:center;position:relative;background:radial-gradient(circle,rgba(151,247,219,.25),transparent 70%)}
+.seal::before,.seal::after{content:"";position:absolute;inset:0;border-radius:50%;border:1px solid rgba(151,247,219,.4);animation:ring 2.6s ease-out infinite}
+.seal::after{inset:-14px;border-style:dashed;border-color:rgba(151,247,219,.2);animation-delay:.7s}
+.seal svg{width:34px;height:34px;color:var(--mint)}
+@keyframes ring{0%,100%{transform:scale(.96);opacity:.9}50%{transform:scale(1.06);opacity:.35}}
+.url{display:flex;align-items:center;justify-content:space-between;gap:10px;border:1px dashed var(--line-2);border-radius:12px;padding:12px 14px;font-family:var(--mono);font-size:12.5px;color:var(--text-2);margin-top:16px}
+.url span:last-child{color:var(--mint)}
+@media(max-width:900px){
+  .scrolly-track{height:auto}
+  .scrolly-sticky{position:relative;height:auto;padding:110px 0}
+  .scrolly-grid{grid-template-columns:1fr}
+  .steps-list li{opacity:1}.steps-list p{max-height:none;opacity:1}
+  .stage{aspect-ratio:auto;max-height:none;display:grid;gap:18px}
+  .scene{position:relative;inset:auto;opacity:1;transform:none;filter:none}
+  .scene .rows>div{opacity:1;transform:none}.field b{max-width:100%}
+  .rail{display:none}.steps-list{padding-left:0}
+}
+
+/* ================= MODES: interactive simulator ================= */
+.sim{display:grid;gap:clamp(24px,3vw,40px);align-items:stretch}
+@media(min-width:1000px){.sim{grid-template-columns:.75fr 1.25fr}}
+.sim-side{display:flex;flex-direction:column;gap:22px}
+.seg{position:relative;display:grid;grid-template-columns:1fr 1fr;padding:5px;border-radius:999px;border:1px solid var(--line-2);background:rgba(2,11,10,.5)}
+.seg button{position:relative;z-index:1;padding:12px;border-radius:999px;font-size:14px;font-weight:500;color:var(--muted);transition:color .3s}
+.seg button[aria-pressed="true"]{color:var(--bg)}
+.seg .pillbg{position:absolute;top:5px;bottom:5px;left:5px;width:calc(50% - 5px);border-radius:999px;background:var(--mint);box-shadow:0 0 30px -4px rgba(151,247,219,.6);transition:transform .5s var(--ease-out)}
+.seg[data-mode="linear"] .pillbg{transform:translateX(100%)}
+.sim-desc{border-radius:20px;padding:24px;flex:1}
+.sim-desc h3{font-size:28px;font-weight:500;letter-spacing:-.03em}
+.sim-desc ul{list-style:none;display:grid;gap:10px;margin-top:16px;color:var(--text-2);font-size:14px}
+.sim-desc li{display:flex;gap:12px}
+.sim-desc li::before{content:"";flex:none;width:6px;height:6px;margin-top:8px;border-radius:2px;background:var(--mint);transform:rotate(45deg)}
+.ctrl{margin-top:20px}
+.ctrl label{display:flex;justify-content:space-between;font-family:var(--mono);font-size:11px;letter-spacing:.12em;text-transform:uppercase;color:var(--muted);margin-bottom:10px}
+.ctrl label b{color:var(--mint);font-weight:500}
+input[type=range]{-webkit-appearance:none;appearance:none;width:100%;height:4px;border-radius:4px;background:linear-gradient(90deg,var(--mint) var(--p,0%),rgba(151,247,219,.15) var(--p,0%));outline:none}
+input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:18px;height:18px;border-radius:50%;background:var(--bg);border:2px solid var(--mint);box-shadow:0 0 16px var(--mint);cursor:grab}
+input[type=range]::-moz-range-thumb{width:16px;height:16px;border-radius:50%;background:var(--bg);border:2px solid var(--mint);box-shadow:0 0 16px var(--mint);cursor:grab}
+.sim-chart{border-radius:24px;padding:clamp(18px,2.4vw,28px);display:flex;flex-direction:column;gap:18px}
+.readout{display:grid;grid-template-columns:repeat(3,1fr);gap:12px}
+.readout div{border:1px solid var(--line);border-radius:14px;padding:14px;background:rgba(2,11,10,.4)}
+.readout span{display:block;font-family:var(--mono);font-size:9.5px;letter-spacing:.14em;text-transform:uppercase;color:var(--faint)}
+.readout b{display:block;font-family:var(--mono);font-weight:500;font-size:clamp(16px,2vw,24px);margin-top:4px;font-variant-numeric:tabular-nums}
+.readout .hl b{color:var(--mint);text-shadow:0 0 20px rgba(151,247,219,.4)}
+#chart{width:100%;height:auto;overflow:visible;cursor:ew-resize;touch-action:none}
+#chart .ax{font-family:var(--mono);font-size:11px;fill:var(--faint)}
+#chart .gl{stroke:rgba(151,247,219,.07)}
+#cLine{filter:drop-shadow(0 0 6px rgba(151,247,219,.7))}
+#cMark text{font-family:var(--mono);font-size:11px;fill:var(--mint)}
+.play{display:flex;align-items:center;gap:12px}
+.play button{width:38px;height:38px;flex:none;border-radius:50%;border:1px solid var(--line-2);display:grid;place-items:center;transition:border-color .2s}
+.play button:hover{border-color:var(--mint)}
+.play button svg{width:14px;height:14px;color:var(--mint)}
+.play input{flex:1}
+
+/* ================= PROOF: tilt card ================= */
+.proof-grid{display:grid;gap:clamp(40px,6vw,96px);align-items:center}
+@media(min-width:1000px){.proof-grid{grid-template-columns:1fr 1fr}}
+.checks{list-style:none;margin-top:32px;display:grid;gap:2px}
+.checks li{display:flex;align-items:center;gap:14px;padding:12px 0;border-bottom:1px solid var(--line);color:var(--faint);transition:color .5s}
+.checks li i{width:22px;height:22px;flex:none;border-radius:50%;border:1px solid var(--line-2);display:grid;place-items:center;transition:all .5s var(--ease)}
+.checks li i svg{width:12px;height:12px;opacity:0;transform:scale(.4);transition:all .4s var(--ease-out)}
+.checks li.on{color:var(--text)}
+.checks li.on i{background:var(--mint);border-color:var(--mint);box-shadow:0 0 16px rgba(151,247,219,.6)}
+.checks li.on i svg{opacity:1;transform:none;color:var(--bg)}
+.checks li span{margin-left:auto;font-family:var(--mono);font-size:12px;color:var(--muted)}
+.tilt-wrap{perspective:1200px}
+.tilt{position:relative;border-radius:26px;transform-style:preserve-3d;transition:transform .5s var(--ease-out);will-change:transform;
+  background:linear-gradient(160deg,rgba(18,58,52,.75),rgba(6,24,22,.85));border:1px solid rgba(151,247,219,.2);box-shadow:0 60px 120px -50px #000,0 0 0 1px rgba(151,247,219,.04) inset}
+.tilt::before{content:"";position:absolute;inset:0;border-radius:inherit;pointer-events:none;background:radial-gradient(500px circle at var(--gx,50%) var(--gy,0%),rgba(151,247,219,.16),transparent 45%);opacity:var(--go,.6);transition:opacity .4s}
+.tilt>*{transform:translateZ(30px)}
+.t-head{display:flex;justify-content:space-between;align-items:center;padding:20px 24px;border-bottom:1px solid var(--line);font-family:var(--mono);font-size:11px;letter-spacing:.12em;text-transform:uppercase;color:var(--muted)}
+.t-body{padding:24px}
+.t-cap{font-family:var(--mono);font-size:11px;letter-spacing:.14em;color:var(--faint);text-transform:uppercase}
+.amount{font-size:clamp(40px,5vw,60px);font-weight:600;letter-spacing:-.05em;line-height:1;margin-top:8px}
+.amount small{font-size:.32em;color:var(--muted);letter-spacing:.04em;font-family:var(--mono);font-weight:400;margin-left:8px}
+.countdown{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin:22px 0}
+.countdown div{border:1px solid var(--line);border-radius:12px;padding:12px 6px;text-align:center;background:rgba(2,11,10,.5)}
+.countdown b{display:block;font-family:var(--mono);font-size:26px;font-weight:500;font-variant-numeric:tabular-nums}
+.countdown span{font-family:var(--mono);font-size:9px;letter-spacing:.14em;color:var(--faint);text-transform:uppercase}
+.t-foot{display:flex;flex-wrap:wrap;gap:8px;padding:0 24px 24px}
+.chip{font-family:var(--mono);font-size:11px;border:1px solid var(--line-2);border-radius:8px;padding:8px 11px;color:var(--text-2);background:rgba(2,11,10,.4)}
+.note{font-family:var(--mono);font-size:10px;color:var(--faint);letter-spacing:.1em;margin-top:14px;text-transform:uppercase;text-align:center}
+
+/* ================= CLAIM terminal ================= */
+.term{border-radius:22px;overflow:hidden;font-family:var(--mono);font-size:13px;line-height:1.8}
+.term-bar{display:flex;align-items:center;gap:7px;padding:14px 18px;border-bottom:1px solid var(--line)}
+.term-bar i{width:10px;height:10px;border-radius:50%;background:rgba(151,247,219,.14)}
+.term-bar span{flex:1;text-align:center;font-size:10px;color:var(--faint);letter-spacing:.1em;text-transform:uppercase}
+.term-body{padding:22px;min-height:300px}
+.term-line{display:block;white-space:pre-wrap;word-break:break-all;animation:termFade .3s var(--ease) both}
+.term-line .p{color:var(--mint)} .term-line .d{color:var(--muted)} .term-line .v{color:var(--text)}
+.cursor{display:inline-block;width:8px;height:15px;background:var(--mint);vertical-align:text-bottom;animation:blink 1s step-end infinite;box-shadow:0 0 10px var(--mint)}
+@keyframes blink{50%{opacity:0}}
+@keyframes termFade{from{opacity:0;transform:translateY(5px)}to{opacity:1;transform:none}}
+
+/* ================= TRUST: spotlight bento ================= */
+.bento{display:grid;gap:14px}
+@media(min-width:760px){.bento{grid-template-columns:repeat(6,1fr)}.b1{grid-column:span 4}.b2{grid-column:span 2}.b3{grid-column:span 2}.b4{grid-column:span 4}}
+.spot{position:relative;border-radius:24px;padding:clamp(24px,3vw,36px);background:rgba(8,30,27,.5);border:1px solid var(--line);overflow:hidden;min-height:260px;display:flex;flex-direction:column;isolation:isolate}
+.spot::before{content:"";position:absolute;inset:-1px;border-radius:inherit;padding:1px;background:radial-gradient(380px circle at var(--mx,-999px) var(--my,-999px),rgba(151,247,219,.7),transparent 45%);
+  -webkit-mask:linear-gradient(#000 0 0) content-box,linear-gradient(#000 0 0);-webkit-mask-composite:xor;mask:linear-gradient(#000 0 0) content-box exclude,linear-gradient(#000 0 0);pointer-events:none}
+.spot::after{content:"";position:absolute;inset:0;z-index:-1;background:radial-gradient(500px circle at var(--mx,-999px) var(--my,-999px),rgba(151,247,219,.08),transparent 45%);pointer-events:none}
+.spot .big{font-size:clamp(56px,7vw,104px);font-weight:600;letter-spacing:-.06em;line-height:.9}
+.spot .big em{font-family:var(--serif);font-weight:400;color:var(--mint)}
+.spot h4{font-size:22px;font-weight:500;letter-spacing:-.02em;margin-top:auto;padding-top:28px}
+.spot p{color:var(--muted);font-size:14px;margin-top:8px;max-width:440px}
+.spot .ic{width:44px;height:44px;border-radius:12px;border:1px solid var(--line-2);display:grid;place-items:center;color:var(--mint)}
+.spot .ic svg{width:20px;height:20px}
+.code{margin-top:22px;font-family:var(--mono);font-size:12.5px;line-height:1.8;color:var(--muted);border-left:1px solid var(--line-2);padding-left:16px}
+.code b{color:var(--mint);font-weight:400}
+
+/* ================= FAQ ================= */
+.faq{display:grid;gap:48px}
+@media(min-width:960px){.faq{grid-template-columns:.85fr 1.15fr;gap:96px}.faq-side{position:sticky;top:120px;align-self:start}}
+.faq-list{border-top:1px solid var(--line)}
+.faq details{border-bottom:1px solid var(--line)}
+.faq summary{list-style:none;cursor:pointer;display:flex;justify-content:space-between;align-items:center;gap:24px;padding:26px 0;font-size:clamp(17px,1.6vw,21px);font-weight:500;letter-spacing:-.02em;transition:color .25s}
+.faq summary::-webkit-details-marker{display:none}
+.faq summary:hover{color:var(--mint)}
+.pm{flex:none;width:36px;height:36px;border-radius:50%;border:1px solid var(--line-2);position:relative;transition:all .4s var(--ease)}
+.pm::before,.pm::after{content:"";position:absolute;left:11px;top:17px;width:12px;height:1.5px;background:var(--mint);transition:transform .4s var(--ease)}
+.pm::after{transform:rotate(90deg)}
+.faq details[open] .pm{background:var(--mint);transform:rotate(180deg)}
+.faq details[open] .pm::before,.faq details[open] .pm::after{background:var(--bg)}
+.faq details[open] .pm::after{transform:rotate(0)}
+.faq .ans{display:grid;grid-template-rows:0fr;transition:grid-template-rows .5s var(--ease-out)}
+.faq details[open] .ans{grid-template-rows:1fr}
+.faq .ans>div{overflow:hidden}
+.faq .ans p{color:var(--muted);padding:0 60px 26px 0;font-size:15px}
+
+/* ================= CTA + FOOTER ================= */
+.cta{position:relative;border-radius:36px;overflow:hidden;border:1px solid var(--line-2);min-height:560px;display:flex;align-items:center;justify-content:center;text-align:center;padding:80px var(--gutter);isolation:isolate}
+.cta canvas{position:absolute;inset:0;width:100%;height:100%;z-index:-1}
+.cta::after{content:"";position:absolute;inset:0;z-index:-1;background:radial-gradient(70% 70% at 50% 50%,transparent 20%,var(--bg) 100%)}
+.cta .h2{max-width:900px;margin:22px auto 0}
+.cta p{color:var(--text-2);margin:22px auto 34px;max-width:460px;font-size:17px}
+.cta-btns{display:flex;flex-wrap:wrap;gap:10px;justify-content:center}
+footer{position:relative;padding:80px 0 0;overflow:hidden}
+.foot{display:flex;flex-wrap:wrap;justify-content:space-between;gap:28px;align-items:flex-start;color:var(--muted);font-size:14px}
+.foot-cols{display:flex;gap:56px;flex-wrap:wrap}
+.foot-cols div{display:grid;gap:10px}
+.foot-cols span{font-family:var(--mono);font-size:10px;letter-spacing:.16em;text-transform:uppercase;color:var(--faint)}
+.foot-cols a{transition:color .2s}
+.foot-cols a:hover{color:var(--mint)}
+.wordmark{font-weight:700;font-size:clamp(80px,21.5vw,340px);letter-spacing:-.075em;line-height:.78;text-align:center;margin-top:80px;
+  background:linear-gradient(180deg,rgba(151,247,219,.55),rgba(151,247,219,0) 85%);-webkit-background-clip:text;background-clip:text;color:transparent;user-select:none;transform:translateY(12%)}
+.legal{display:flex;flex-wrap:wrap;justify-content:space-between;gap:12px;font-family:var(--mono);font-size:11px;color:var(--faint);letter-spacing:.06em;padding:24px 0;border-top:1px solid var(--line);position:relative;z-index:1;background:var(--bg)}
+
+@media(prefers-reduced-motion:reduce){
+  html{scroll-behavior:auto}
+  *,*::before,*::after{animation:none!important;transition:none!important}
+  .split .w>span,.js .fade{transform:none;opacity:1}
+}
+</style>
+</head>
+<body>
+<script>document.documentElement.classList.add('js')</script>
+<div class="grain" aria-hidden="true"></div>
+
+<nav class="fx" aria-label="Main">
+  <div class="nav-pill">
+    <a class="brand" href="#"><img src="logo.jpeg" alt="">Hypeflow</a>
+    <div class="nav-links">
+      <a href="#how">How it works</a>
+      <a href="#modes">Lock &amp; vest</a>
+      <a href="#proof">Proof</a>
+      <a href="#faq">FAQ</a>
+    </div>
+    <a class="btn btn-primary" href="#create">Launch app
+      <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M3 8h10M9 4l4 4-4 4"/></svg></a>
+  </div>
+</nav>
+
+<!-- ================= HERO ================= -->
+<header class="hx">
+  <canvas id="hxCanvas" aria-hidden="true"></canvas>
+  <div class="hx-ui">
+    <div class="live"><i></i>Pilot · Elysium testnet 99801</div>
+    <div class="hx-title">
+      <div class="hx-est">Token locks · vesting · streaming</div>
+      <h1><span class="row">Locked</span><span class="row"><span class="serif">in</span>Flow.</span></h1>
+    </div>
+    <div class="hx-card glass">
+      <p>Set an unlock schedule for any ERC‑20 on Elysium, then share one public link that proves it onchain.</p>
+      <div class="stats">
+        <div><span>App fee</span><b>0%</b></div>
+        <div><span>Admin keys</span><b>None</b></div>
+      </div>
+      <a class="go" href="#create">Create a lock
+        <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.4"><path d="M3 8h10M9 4l4 4-4 4"/></svg></a>
+    </div>
+    <div class="hx-widget" aria-hidden="true">
+      <div class="lbl">Example · linear vesting</div>
+      <div class="box glass">
+        <div class="top"><span>Vested</span><b id="hxPct">0.00%</b></div>
+        <div class="bar"><i id="hxBar"></i></div>
+        <div class="row2"><div><span>Cliff</span>passed</div><div><span>Claimable</span><b id="hxClaim" style="font-weight:400">0</b></div></div>
+      </div>
+    </div>
+    <div class="hx-scroll" aria-hidden="true">Scroll<i></i></div>
+  </div>
+</header>
+
+<!-- ================= MARQUEE ================= -->
+<div class="marquee" aria-hidden="true">
+  <div class="marquee-track">
+    <span>Hard lock</span><svg viewBox="0 0 10 10"><path d="M5 0L6.2 3.8 10 5 6.2 6.2 5 10 3.8 6.2 0 5 3.8 3.8z" fill="currentColor"/></svg>
+    <em>linear vesting</em><svg viewBox="0 0 10 10"><path d="M5 0L6.2 3.8 10 5 6.2 6.2 5 10 3.8 6.2 0 5 3.8 3.8z" fill="currentColor"/></svg>
+    <span class="o">Public proof</span><svg viewBox="0 0 10 10"><path d="M5 0L6.2 3.8 10 5 6.2 6.2 5 10 3.8 6.2 0 5 3.8 3.8z" fill="currentColor"/></svg>
+    <span>Gas in HYPE</span><svg viewBox="0 0 10 10"><path d="M5 0L6.2 3.8 10 5 6.2 6.2 5 10 3.8 6.2 0 5 3.8 3.8z" fill="currentColor"/></svg>
+    <em>built for Ascend</em><svg viewBox="0 0 10 10"><path d="M5 0L6.2 3.8 10 5 6.2 6.2 5 10 3.8 6.2 0 5 3.8 3.8z" fill="currentColor"/></svg>
+    <span class="o">No admin keys</span><svg viewBox="0 0 10 10"><path d="M5 0L6.2 3.8 10 5 6.2 6.2 5 10 3.8 6.2 0 5 3.8 3.8z" fill="currentColor"/></svg>
+    <span>Hard lock</span><svg viewBox="0 0 10 10"><path d="M5 0L6.2 3.8 10 5 6.2 6.2 5 10 3.8 6.2 0 5 3.8 3.8z" fill="currentColor"/></svg>
+    <em>linear vesting</em><svg viewBox="0 0 10 10"><path d="M5 0L6.2 3.8 10 5 6.2 6.2 5 10 3.8 6.2 0 5 3.8 3.8z" fill="currentColor"/></svg>
+    <span class="o">Public proof</span><svg viewBox="0 0 10 10"><path d="M5 0L6.2 3.8 10 5 6.2 6.2 5 10 3.8 6.2 0 5 3.8 3.8z" fill="currentColor"/></svg>
+    <span>Gas in HYPE</span><svg viewBox="0 0 10 10"><path d="M5 0L6.2 3.8 10 5 6.2 6.2 5 10 3.8 6.2 0 5 3.8 3.8z" fill="currentColor"/></svg>
+    <em>built for Ascend</em><svg viewBox="0 0 10 10"><path d="M5 0L6.2 3.8 10 5 6.2 6.2 5 10 3.8 6.2 0 5 3.8 3.8z" fill="currentColor"/></svg>
+    <span class="o">No admin keys</span><svg viewBox="0 0 10 10"><path d="M5 0L6.2 3.8 10 5 6.2 6.2 5 10 3.8 6.2 0 5 3.8 3.8z" fill="currentColor"/></svg>
+  </div>
+</div>
+
+<main>
+<!-- ================= HOW (sticky scene) ================= -->
+<section id="how" class="scrolly">
+  <div class="scrolly-track" id="scrolly">
+    <div class="scrolly-sticky">
+      <div class="glow" style="width:700px;height:700px;right:-200px;top:10%"></div>
+      <div class="wrap scrolly-grid">
+        <div>
+          <span class="eyebrow">How it works</span>
+          <h2 class="h2 split">Launch. Lock. <em>Prove it.</em></h2>
+          <div class="steps-list" id="stepsList">
+            <div class="rail"><i id="railFill"></i></div>
+            <ol style="list-style:none">
+            <li class="on"><span class="n">01 · Ascend</span><h3>Launch with a dev buy</h3><p>Launch on Ascend and route the dev buy to the wallet that will create the lock. Copy the token address from the launch receipt.</p></li>
+            <li><span class="n">02 · Hypeflow</span><h3>Lock or vest it</h3><p>Enter the ERC‑20, amount, beneficiary and dates. Review the summary, approve the exact amount, then sign the lock.</p></li>
+            <li><span class="n">03 · Onchain</span><h3>Share the proof</h3><p>Post one link with your launch announcement. When the schedule unlocks, the beneficiary claims straight from Hypeflow.</p></li>
+            </ol>
+          </div>
+        </div>
+
+        <div class="stage" aria-label="Illustrative product screens">
+          <div class="scene on" data-scene="0">
+            <div class="panel glass">
+              <div class="panel-h"><span>Ascend · launch receipt</span><span class="ok"><i></i>Success</span></div>
+              <div class="tok"><div class="tok-ic">EX</div><div><b>Example Token</b><span>EXAMPLE · ERC‑20</span></div></div>
+              <dl class="rows">
+                <div><dt>Event</dt><dd>Launched</dd></div>
+                <div><dt>Dev buy</dt><dd>25,000,000 EXAMPLE</dd></div>
+                <div><dt>Sent to</dt><dd>creator wallet</dd></div>
+                <div><dt>Token</dt><dd>0x7a3f…c91e</dd></div>
+                <div><dt>Next</dt><dd style="color:var(--mint)">Lock on Hypeflow →</dd></div>
+              </dl>
+            </div>
+          </div>
+          <div class="scene" data-scene="1">
+            <div class="panel glass">
+              <div class="panel-h"><span>Hypeflow · create lock</span><span>Hard lock</span></div>
+              <div class="field"><span>Token</span><b>0x7a3f…c91e · EXAMPLE</b></div>
+              <div class="field"><span>Amount</span><b>25,000,000</b></div>
+              <div class="field"><span>Beneficiary</span><b>0x51b0…7d24</b></div>
+              <div class="field"><span>Unlocks</span><b>in 90 days · local + UTC</b></div>
+              <div class="steps-btn"><div>1 · Approve</div><div>2 · Lock</div></div>
+            </div>
+          </div>
+          <div class="scene" data-scene="2">
+            <div class="panel glass" style="text-align:center">
+              <div class="panel-h"><span>Public proof</span><span class="ok"><i></i>Confirmed</span></div>
+              <div class="seal"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><rect x="5" y="11" width="14" height="9" rx="2"/><path d="M8 11V8a4 4 0 0 1 8 0v3"/></svg></div>
+              <div style="font-size:24px;font-weight:500;letter-spacing:-.03em">Creator tokens locked on Hypeflow</div>
+              <div style="color:var(--muted);font-size:14px;margin-top:6px">25,000,000 EXAMPLE · unlocks in 90 days</div>
+              <div class="url"><span>/proof/99801/1</span><span>Copy link</span></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ================= MODES (simulator) ================= -->
+<section id="modes">
+  <div class="glow" style="width:800px;height:800px;left:-300px;top:0"></div>
+  <div class="wrap">
+    <div class="sec-head">
+      <div>
+        <span class="eyebrow">Two modes</span>
+        <h2 class="h2 split">A hard stop, or <em>a steady stream.</em></h2>
+      </div>
+      <p class="lead fade">Drag through time and watch what the beneficiary can claim. Both modes use the same escrow contract and the same formula the contract runs.</p>
+    </div>
+
+    <div class="sim fade">
+      <div class="sim-side">
+        <div class="seg" id="seg" data-mode="hard" role="group" aria-label="Mode">
+          <span class="pillbg"></span>
+          <button type="button" aria-pressed="true" data-mode="hard">Hard lock</button>
+          <button type="button" aria-pressed="false" data-mode="linear">Linear vesting</button>
+        </div>
+        <div class="sim-desc glass">
+          <h3 id="mTitle">Hard lock</h3>
+          <ul id="mList"></ul>
+          <div class="ctrl" id="cliffCtrl" hidden>
+            <label for="cliff">Cliff <b id="cliffOut">day 120</b></label>
+            <input type="range" id="cliff" min="0" max="240" value="120">
+          </div>
+        </div>
+      </div>
+
+      <div class="sim-chart glass">
+        <div class="readout" aria-live="polite">
+          <div><span>Day</span><b id="rDay">0</b></div>
+          <div><span>Vested</span><b id="rPct">0%</b></div>
+          <div class="hl"><span>Claimable</span><b id="rAmt">0</b></div>
+        </div>
+        <svg id="chart" viewBox="0 0 640 300" role="img" aria-label="Unlock schedule chart">
+          <defs>
+            <linearGradient id="area" x1="0" y1="0" x2="0" y2="1">
+              <stop offset="0" stop-color="#97F7DB" stop-opacity=".35"/>
+              <stop offset="1" stop-color="#97F7DB" stop-opacity="0"/>
+            </linearGradient>
+          </defs>
+          <g id="cGrid"></g>
+          <path id="cArea" fill="url(#area)"/>
+          <path id="cGhost" fill="none" stroke="rgba(151,247,219,.25)" stroke-width="1.5" stroke-dasharray="4 6"/>
+          <path id="cLine" fill="none" stroke="#97F7DB" stroke-width="2.5" stroke-linejoin="round"/>
+          <g id="cMark"></g>
+          <line id="cScrub" y1="20" y2="260" stroke="#97F7DB" stroke-opacity=".5" stroke-dasharray="2 4"/>
+          <circle id="cDot" r="6" fill="#020B0A" stroke="#97F7DB" stroke-width="2.5"/>
+        </svg>
+        <div class="play">
+          <button type="button" id="playBtn" aria-label="Pause"><svg viewBox="0 0 14 14" fill="currentColor" id="playIc"><rect x="3" y="2" width="3" height="10" rx="1"/><rect x="8" y="2" width="3" height="10" rx="1"/></svg></button>
+          <input type="range" id="time" min="0" max="365" value="0" step="0.5" aria-label="Time in days">
+        </div>
+      </div>
+    </div>
+    <p class="note">Example: 25,000,000 tokens · 365‑day schedule</p>
+  </div>
+</section>
+
+<!-- ================= PROOF ================= -->
+<section id="proof">
+  <div class="glow" style="width:700px;height:700px;right:-200px;top:20%"></div>
+  <div class="wrap proof-grid">
+    <div>
+      <span class="eyebrow">Public proof</span>
+      <h2 class="h2 split">One link your community <em>can check.</em></h2>
+      <p class="lead fade" style="margin-top:24px">Each position gets a public page that opens without a wallet. Every value on it is read from the contract.</p>
+      <ul class="checks" id="checks">
+        <li><i><svg viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="2"><path d="M2.5 6.5l2.2 2L9.5 3.5"/></svg></i>Chain &amp; escrow contract<span>99801</span></li>
+        <li><i><svg viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="2"><path d="M2.5 6.5l2.2 2L9.5 3.5"/></svg></i>Token address<span>ERC‑20</span></li>
+        <li><i><svg viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="2"><path d="M2.5 6.5l2.2 2L9.5 3.5"/></svg></i>Deposit amount<span>exact</span></li>
+        <li><i><svg viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="2"><path d="M2.5 6.5l2.2 2L9.5 3.5"/></svg></i>Creator &amp; beneficiary<span>fixed</span></li>
+        <li><i><svg viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="2"><path d="M2.5 6.5l2.2 2L9.5 3.5"/></svg></i>Schedule &amp; status<span>local + UTC</span></li>
+        <li><i><svg viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="2"><path d="M2.5 6.5l2.2 2L9.5 3.5"/></svg></i>Deposit &amp; claim transactions<span>explorer</span></li>
+      </ul>
+    </div>
+    <div class="fade">
+      <div class="tilt-wrap">
+        <div class="tilt" id="tilt" aria-label="Example proof page">
+          <div class="t-head"><span>Position #1 · Elysium testnet</span><span class="ok"><i></i>Locked</span></div>
+          <div class="t-body">
+            <div class="t-cap">Creator tokens locked on Hypeflow</div>
+            <div class="amount">25,000,000<small>EXAMPLE</small></div>
+            <div class="countdown" id="countdown" aria-label="Time until unlock">
+              <div><b data-k="d">--</b><span>Days</span></div>
+              <div><b data-k="h">--</b><span>Hours</span></div>
+              <div><b data-k="m">--</b><span>Min</span></div>
+              <div><b data-k="s">--</b><span>Sec</span></div>
+            </div>
+            <dl class="rows">
+              <div><dt>Mode</dt><dd>Hard lock</dd></div>
+              <div><dt>Beneficiary</dt><dd>0x51b0…7d24</dd></div>
+              <div><dt>Unlocks</dt><dd id="unlockAt">—</dd></div>
+            </dl>
+          </div>
+          <div class="t-foot"><span class="chip">Deposit tx ↗</span><span class="chip">Escrow contract ↗</span><span class="chip">Copy link</span></div>
+        </div>
+      </div>
+      <p class="note">Illustrative example · not a real position</p>
+    </div>
+  </div>
+</section>
+
+<!-- ================= CLAIM ================= -->
+<section id="claim" style="padding-top:0">
+  <div class="wrap proof-grid">
+    <div class="term glass fade" id="term">
+      <div class="term-bar"><i></i><i></i><i></i><span>hypeflow · claim</span></div>
+      <div class="term-body" id="termBody"></div>
+    </div>
+    <div>
+      <span class="eyebrow">Claim</span>
+      <h2 class="h2 split">When it unlocks, <em>it's yours.</em></h2>
+      <p class="lead fade" style="margin-top:24px">The beneficiary connects a wallet and Hypeflow reads the claimable amount from the contract. One signature sends it, only ever to the recorded beneficiary.</p>
+    </div>
+  </div>
+</section>
+
+<!-- ================= TRUST ================= -->
+<section id="trust" style="padding-top:0">
+  <div class="wrap">
+    <div class="sec-head">
+      <div>
+        <span class="eyebrow">Escrow rules</span>
+        <h2 class="h2 split">Simple rules, <em>written in code.</em></h2>
+      </div>
+      <p class="lead fade">One non-upgradeable contract. No admin, no pause switch, no way to edit a schedule after it's created.</p>
+    </div>
+    <div class="bento" id="bento">
+      <div class="spot b1 fade">
+        <div class="big">0 <em>admin keys</em></div>
+        <h4>Nobody can move your tokens early</h4>
+        <p>There is no owner, no upgrade path and no emergency withdraw. Not the creator, not Hypeflow.</p>
+      </div>
+      <div class="spot b2 fade">
+        <div class="ic"><svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="10" cy="7" r="3"/><path d="M4 17c1-3 3.5-4.5 6-4.5s5 1.5 6 4.5"/></svg></div>
+        <h4>Beneficiary only</h4>
+        <p>Claims always pay the recorded beneficiary. Every other caller is rejected.</p>
+      </div>
+      <div class="spot b3 fade">
+        <div class="ic"><svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M4 10h12M10 4v12"/><circle cx="10" cy="10" r="7"/></svg></div>
+        <h4>Exact deposits</h4>
+        <p>A lock only succeeds if the escrow receives the exact amount, so fee-on-transfer tokens are rejected.</p>
+      </div>
+      <div class="spot b4 fade">
+        <div class="ic"><svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M10 3l6 3v4c0 4-3 6-6 7-3-1-6-3-6-7V6z"/></svg></div>
+        <div class="code">
+          invariant <b>claimed ≤ total</b> for every position<br>
+          invariant <b>balance == Σ(total − claimed)</b><br>
+          <span style="color:var(--faint)">8,192 randomized calls · 0 violations</span>
+        </div>
+        <h4>Tested invariants</h4>
+        <p>Fuzz and invariant tests check that claims never exceed the deposit and the escrow always stays solvent.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ================= FAQ ================= -->
+<section id="faq" style="padding-top:0">
+  <div class="wrap faq">
+    <div class="faq-side">
+      <span class="eyebrow">FAQ</span>
+      <h2 class="h2 split">Questions, <em>answered.</em></h2>
+    </div>
+    <div class="faq-list fade">
+      <details><summary>Which tokens can I lock?<span class="pm"></span></summary><div class="ans"><div><p>Standard ERC‑20 tokens with fixed balances and transfer amounts. Fee-on-transfer tokens are rejected and rebasing tokens aren't supported. To lock HYPE, wrap it to WHYPE using the official address for the active network.</p></div></div></details>
+      <details><summary>What does it cost?<span class="pm"></span></summary><div class="ans"><div><p>The app fee is zero during the pilot. You only pay network gas in HYPE.</p></div></div></details>
+      <details><summary>Can I cancel or change a lock?<span class="pm"></span></summary><div class="ans"><div><p>No. Once a position is created, its schedule and beneficiary are fixed. That's what makes the proof worth sharing.</p></div></div></details>
+      <details><summary>What does "streaming" mean here?<span class="pm"></span></summary><div class="ans"><div><p>In linear vesting the claimable balance grows every second. The beneficiary pulls it whenever they like; tokens aren't pushed automatically.</p></div></div></details>
+      <details><summary>Do I need to launch on Ascend?<span class="pm"></span></summary><div class="ans"><div><p>No. Ascend is the first flow we support, but any standard ERC‑20 address works.</p></div></div></details>
+      <details><summary>Is it live on mainnet?<span class="pm"></span></summary><div class="ans"><div><p>Not yet. The pilot runs on Elysium testnet first. Verified contract addresses will be published here before the public release.</p></div></div></details>
+    </div>
+  </div>
+</section>
+
+<!-- ================= CTA ================= -->
+<section id="create" style="padding-top:0">
+  <div class="wrap">
+    <div class="cta">
+      <canvas id="ctaCanvas" aria-hidden="true"></canvas>
+      <div>
+        <span class="eyebrow">Hypeflow pilot</span>
+        <h2 class="h2 split">Set the schedule. <em>Share the proof.</em></h2>
+        <p class="fade">Hypeflow brings token locks, vesting, and streaming to Elysium.</p>
+        <div class="cta-btns fade">
+          <a class="btn btn-primary" href="#">Create a lock
+            <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M3 8h10M9 4l4 4-4 4"/></svg></a>
+          <a class="btn btn-ghost" href="https://app.ascendlaunch.xyz/" target="_blank" rel="noopener">Launch on Ascend ↗</a>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+</main>
+
+<footer>
+  <div class="wrap">
+    <div class="foot">
+      <div>
+        <a class="brand" href="#"><img src="logo.jpeg" alt="">Hypeflow</a>
+        <p style="margin-top:14px;max-width:300px">Token locks, vesting, and streaming on Elysium.</p>
+      </div>
+      <div class="foot-cols">
+        <div><span>Product</span><a href="#how">How it works</a><a href="#modes">Lock &amp; vest</a><a href="#proof">Proof</a></div>
+        <div><span>Ecosystem</span><a href="https://elysium.kinetiq.xyz/docs/connecting-to-elysium" target="_blank" rel="noopener">Elysium</a><a href="https://app.ascendlaunch.xyz/" target="_blank" rel="noopener">Ascend</a></div>
+        <div><span>Help</span><a href="#faq">FAQ</a></div>
+      </div>
+    </div>
+    <div class="wordmark" aria-hidden="true">Hypeflow</div>
+  </div>
+  <div class="legal wrap"><span>Contracts not yet audited · pilot on testnet</span><span>Gas paid in HYPE</span></div>
+</footer>
+
+<script>
+(() => {
+  const motionOk = !matchMedia('(prefers-reduced-motion: reduce)').matches;
+  const $ = s => document.querySelector(s), $$ = s => [...document.querySelectorAll(s)];
+
+  // ---------- Particle engine (hero H + CTA stream) ----------
+  function particles(cv, opts) {
+    const ctx = cv.getContext('2d');
+    const MINT = [151, 247, 219];
+    let W, H, dpr, P = [], geo, mx = .5, my = .5, tx = .5, ty = .5, raf, visible = true;
+    const sprite = document.createElement('canvas'); sprite.width = sprite.height = 64;
+    const sg = sprite.getContext('2d'), grd = sg.createRadialGradient(32, 32, 0, 32, 32, 32);
+    grd.addColorStop(0, 'rgba(230,255,248,1)'); grd.addColorStop(.25, `rgba(${MINT},.85)`);
+    grd.addColorStop(.6, `rgba(${MINT},.18)`); grd.addColorStop(1, `rgba(${MINT},0)`);
+    sg.fillStyle = grd; sg.fillRect(0, 0, 64, 64);
+    const gauss = () => (Math.random() + Math.random() + Math.random() - 1.5) / 1.5;
+    const smooth = t => t <= 0 ? 0 : t >= 1 ? 1 : t * t * (3 - 2 * t);
+
+    function layout() {
+      dpr = Math.min(devicePixelRatio || 1, 1.75);
+      W = cv.clientWidth; H = cv.clientHeight;
+      cv.width = W * dpr; cv.height = H * dpr; ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+      const wide = W > 900;
+      let S, cx, cy;
+      if (opts.glyph) { S = wide ? Math.min(H * .74, W * .5) : Math.min(W * .95, H * .5); cx = wide ? W * .6 : W * .5; cy = wide ? H * .44 : H * .34; }
+      else { S = Math.min(H * .9, W * .5); cx = W * .5; cy = H * .5; }
+      const pw = S * .27;
+      geo = { S, cx, cy, pw, l0: cx - S / 2, l1: cx - S / 2 + pw, r0: cx + S / 2 - pw, r1: cx + S / 2, top: cy - S / 2, bot: cy + S / 2 };
+      const n = Math.round(Math.min(wide ? opts.max : opts.max * .45, (W * H) / (wide ? 300 : 260)));
+      P = Array.from({ length: n }, () => spawn(true));
+    }
+    function streamY(x) {
+      const { l1, r0, cy, S } = geo, t = (x - l1) / (r0 - l1);
+      return cy + S * .07 - S * .14 * smooth(t) + Math.sin(x * .004) * S * .015;
+    }
+    function spawn(init) {
+      const g = geo, z = Math.random() ** 1.6, r = Math.random();
+      if (opts.glyph && r < .42) {
+        const left = Math.random() < .5;
+        return { t: 'p', x: (left ? g.l0 : g.r0) + Math.random() * g.pw, y: g.top + Math.random() * g.S, vy: -(.08 + Math.random() * .35), z, a: .35 + Math.random() * .65 };
+      }
+      if (r < .9) return { t: 's', x: init ? Math.random() * W : -20 - Math.random() * 80, o: gauss(), v: .5 + Math.random() * 1.6 + z * 1.2, z, a: .3 + Math.random() * .7, ph: Math.random() * 6.28 };
+      return { t: 'd', x: Math.random() * W, y: Math.random() * H, vx: .05 + Math.random() * .2, vy: -.05 + Math.random() * .1, z: .55 + Math.random() * .45, a: .08 + Math.random() * .25 };
+    }
+    function frame(time) {
+      mx += (tx - mx) * .04; my += (ty - my) * .04;
+      ctx.globalCompositeOperation = 'source-over';
+      ctx.fillStyle = 'rgba(2,11,10,0.42)'; ctx.fillRect(0, 0, W, H);
+      ctx.globalCompositeOperation = 'lighter';
+      const g = geo, band = g.S * (opts.glyph ? .075 : .05);
+      for (let i = 0; i < P.length; i++) {
+        const p = P[i]; let x, y, alpha;
+        if (p.t === 'p') {
+          p.y += p.vy; if (p.y < g.top) p.y = g.bot;
+          x = p.x; y = p.y; alpha = p.a * Math.min(1, Math.min(p.y - g.top, g.bot - p.y) / (g.S * .08));
+        } else if (p.t === 's') {
+          p.x += p.v; if (p.x > W + 40) Object.assign(p, spawn(false));
+          x = p.x;
+          const inGap = opts.glyph && x > g.l0 && x < g.r1;
+          const spread = band * (inGap ? 1 : 1.9 + Math.abs(x - g.cx) / W * 2);
+          y = streamY(x) + p.o * spread + Math.sin(time * .001 + p.ph + x * .01) * 2;
+          alpha = p.a * (inGap || !opts.glyph ? 1 : .55);
+        } else {
+          p.x += p.vx; p.y += p.vy;
+          if (p.x > W + 20) p.x = -20; if (p.y < -20) p.y = H + 20; if (p.y > H + 20) p.y = -20;
+          x = p.x; y = p.y; alpha = p.a;
+        }
+        x += (mx - .5) * 40 * p.z; y += (my - .5) * 26 * p.z;
+        let size = 1.4 + p.z * 3.2;
+        if (p.z > .93) { size *= 5.5; alpha *= .12; } else if (p.z < .2) alpha *= .55;
+        ctx.globalAlpha = Math.min(1, alpha);
+        ctx.drawImage(sprite, x - size, y - size, size * 2, size * 2);
+      }
+      ctx.globalAlpha = 1;
+      if (motionOk && visible) raf = requestAnimationFrame(frame);
+    }
+    const still = () => { for (let i = 0; i < 40; i++) frame(i * 16); };
+    layout();
+    if (motionOk) {
+      addEventListener('pointermove', e => { tx = e.clientX / innerWidth; ty = e.clientY / innerHeight; }, { passive: true });
+      new IntersectionObserver(es => { visible = es[0].isIntersecting; cancelAnimationFrame(raf); if (visible) raf = requestAnimationFrame(frame); }).observe(cv);
+    } else still();
+    let rt; addEventListener('resize', () => { clearTimeout(rt); rt = setTimeout(() => { layout(); if (!motionOk) still(); }, 150); });
+  }
+  particles($('#hxCanvas'), { glyph: true, max: 4200 });
+  particles($('#ctaCanvas'), { glyph: false, max: 1600 });
+
+  // Hero vesting widget
+  (() => {
+    const TOTAL = 25_000_000, t0 = performance.now();
+    (function vw() {
+      const pct = 38 + ((performance.now() - t0) / 1000 * .35) % 60;
+      $('#hxPct').textContent = pct.toFixed(2) + '%';
+      $('#hxBar').style.width = pct + '%';
+      $('#hxClaim').textContent = Math.round(TOTAL * pct / 100 - TOTAL * .3).toLocaleString('en-US');
+      if (motionOk) requestAnimationFrame(vw);
+    })();
+  })();
+
+  // ---------- Word-mask headings + fades ----------
+  $$('.split').forEach(h => {
+    let i = 0;
+    const wrapWords = (node, parent) => {
+      node.textContent.split(/(\s+)/).forEach(part => {
+        if (!part) return;
+        if (/^\s+$/.test(part)) { parent.appendChild(document.createTextNode(' ')); return; }
+        const w = document.createElement('span'); w.className = 'w';
+        const inner = document.createElement('span'); inner.textContent = part;
+        inner.style.transitionDelay = (i++ * 70) + 'ms';
+        w.appendChild(inner); parent.appendChild(w);
+      });
+    };
+    const frag = document.createDocumentFragment();
+    [...h.childNodes].forEach(n => {
+      if (n.nodeType === 3) wrapWords(n, frag);
+      else { const clone = n.cloneNode(false); wrapWords(n, clone); frag.appendChild(clone); }
+    });
+    h.setAttribute('aria-label', h.textContent);
+    h.textContent = ''; h.appendChild(frag);
+  });
+  const io = new IntersectionObserver(es => es.forEach(e => {
+    if (e.isIntersecting) { e.target.classList.add('in'); io.unobserve(e.target); }
+  }), { threshold: .2, rootMargin: '0px 0px -60px 0px' });
+  $$('.split,.fade').forEach(el => io.observe(el));
+
+  // ---------- Sticky scroll scene ----------
+  (() => {
+    const track = $('#scrolly'), lis = $$('#stepsList li'), scenes = $$('.scene'), rail = $('#railFill');
+    let cur = 0;
+    function onScroll() {
+      if (innerWidth <= 900) return;
+      const r = track.getBoundingClientRect();
+      const p = Math.min(1, Math.max(0, -r.top / (r.height - innerHeight)));
+      rail.style.height = (p * 100) + '%';
+      const idx = Math.min(2, Math.floor(p * 3 * .999));
+      if (idx !== cur) {
+        cur = idx;
+        lis.forEach((l, i) => l.classList.toggle('on', i === idx));
+        scenes.forEach((s, i) => s.classList.toggle('on', i === idx));
+      }
+    }
+    addEventListener('scroll', onScroll, { passive: true }); onScroll();
+  })();
+
+  // ---------- Mode simulator ----------
+  (() => {
+    const TOTAL = 25_000_000, DAYS = 365, UNLOCK = 270;
+    const X0 = 40, X1 = 620, Y0 = 260, Y1 = 30;
+    const sx = d => X0 + (d / DAYS) * (X1 - X0), sy = v => Y0 - v * (Y0 - Y1);
+    const seg = $('#seg'), time = $('#time'), cliff = $('#cliff');
+    let mode = 'hard', playing = motionOk, t = 0, last = 0;
+    const copy = {
+      hard: ['Hard lock', ['Tokens stay in escrow until one timestamp.', 'Before unlock, claimable is exactly zero.', 'At or after unlock, the beneficiary claims the full amount in one go.']],
+      linear: ['Linear vesting', ['Nothing is claimable before the cliff.', 'At the cliff, everything accrued since the start unlocks at once.', 'Then it streams every second until the end. The last claim takes the exact remainder.']]
+    };
+    const vested = d => {
+      if (mode === 'hard') return d >= UNLOCK ? 1 : 0;
+      const c = +cliff.value; if (d < c) return 0; return Math.min(1, d / DAYS);
+    };
+    $('#cGrid').innerHTML = [0, .25, .5, .75, 1].map(v => `<line class="gl" x1="${X0}" x2="${X1}" y1="${sy(v)}" y2="${sy(v)}"/><text class="ax" x="0" y="${sy(v) + 4}">${v * 100}%</text>`).join('')
+      + [0, 90, 180, 270, 365].map(d => `<text class="ax" x="${sx(d) - 10}" y="285">d${d}</text>`).join('');
+    function drawCurve() {
+      let pts = [];
+      for (let d = 0; d <= DAYS; d += 1) pts.push([sx(d), sy(vested(d))]);
+      // make vertical jumps crisp
+      const line = pts.map((p, i) => (i ? 'L' : 'M') + p[0].toFixed(1) + ' ' + p[1].toFixed(1)).join('');
+      $('#cLine').setAttribute('d', line);
+      $('#cArea').setAttribute('d', line + `L${X1} ${Y0}L${X0} ${Y0}Z`);
+      $('#cGhost').setAttribute('d', mode === 'linear' ? `M${sx(0)} ${sy(0)}L${sx(DAYS)} ${sy(1)}` : '');
+      const md = mode === 'hard' ? UNLOCK : +cliff.value;
+      $('#cMark').innerHTML = `<line x1="${sx(md)}" x2="${sx(md)}" y1="${Y1}" y2="${Y0}" stroke="rgba(151,247,219,.3)"/><text x="${sx(md) + 6}" y="${Y1 + 12}">${mode === 'hard' ? 'unlock' : 'cliff'}</text>`;
+    }
+    function setT(d) {
+      t = d; time.value = d;
+      time.style.setProperty('--p', (d / DAYS * 100) + '%');
+      const v = vested(d);
+      $('#cScrub').setAttribute('x1', sx(d)); $('#cScrub').setAttribute('x2', sx(d));
+      $('#cDot').setAttribute('cx', sx(d)); $('#cDot').setAttribute('cy', sy(v));
+      $('#rDay').textContent = Math.floor(d);
+      $('#rPct').textContent = (v * 100).toFixed(1) + '%';
+      $('#rAmt').textContent = Math.floor(TOTAL * v).toLocaleString('en-US');
+    }
+    function setMode(m) {
+      mode = m; seg.dataset.mode = m;
+      seg.querySelectorAll('button').forEach(b => b.setAttribute('aria-pressed', b.dataset.mode === m));
+      $('#mTitle').textContent = copy[m][0];
+      $('#mList').innerHTML = copy[m][1].map(s => `<li>${s}</li>`).join('');
+      $('#cliffCtrl').hidden = m !== 'linear';
+      drawCurve(); setT(t);
+    }
+    seg.addEventListener('click', e => { const b = e.target.closest('button'); if (b) setMode(b.dataset.mode); });
+    cliff.addEventListener('input', () => {
+      $('#cliffOut').textContent = 'day ' + cliff.value;
+      cliff.style.setProperty('--p', (cliff.value / 240 * 100) + '%');
+      drawCurve(); setT(t);
+    });
+    cliff.style.setProperty('--p', '50%');
+    const pause = () => { playing = false; $('#playIc').innerHTML = '<path d="M3 2l9 5-9 5z"/>'; $('#playBtn').setAttribute('aria-label', 'Play'); };
+    const play = () => { playing = true; $('#playIc').innerHTML = '<rect x="3" y="2" width="3" height="10" rx="1"/><rect x="8" y="2" width="3" height="10" rx="1"/>'; $('#playBtn').setAttribute('aria-label', 'Pause'); last = 0; requestAnimationFrame(loop); };
+    $('#playBtn').addEventListener('click', () => playing ? pause() : play());
+    time.addEventListener('input', () => { pause(); setT(+time.value); });
+    // Drag directly on the chart
+    const chart = $('#chart');
+    const fromEvt = e => { const r = chart.getBoundingClientRect(); const x = (e.clientX - r.left) / r.width * 640; return Math.max(0, Math.min(DAYS, (x - X0) / (X1 - X0) * DAYS)); };
+    let drag = false;
+    chart.addEventListener('pointerdown', e => { drag = true; chart.setPointerCapture(e.pointerId); pause(); setT(fromEvt(e)); });
+    chart.addEventListener('pointermove', e => { if (drag) setT(fromEvt(e)); });
+    chart.addEventListener('pointerup', () => drag = false);
+    function loop(ts) {
+      if (!playing) return;
+      if (last) { let d = t + (ts - last) / 1000 * 55; if (d > DAYS) d = 0; setT(d); }
+      last = ts; requestAnimationFrame(loop);
+    }
+    setMode('hard');
+    if (!motionOk) { pause(); setT(200); }
+    else new IntersectionObserver(es => { if (es[0].isIntersecting && playing) { last = 0; requestAnimationFrame(loop); } }).observe(chart);
+  })();
+
+  // ---------- Proof: tilt + checks + countdown ----------
+  (() => {
+    const card = $('#tilt');
+    if (motionOk && matchMedia('(hover:hover)').matches) {
+      card.addEventListener('pointermove', e => {
+        const r = card.getBoundingClientRect(), px = (e.clientX - r.left) / r.width, py = (e.clientY - r.top) / r.height;
+        card.style.transform = `rotateY(${(px - .5) * 14}deg) rotateX(${(.5 - py) * 12}deg)`;
+        card.style.setProperty('--gx', px * 100 + '%'); card.style.setProperty('--gy', py * 100 + '%'); card.style.setProperty('--go', 1);
+      });
+      card.addEventListener('pointerleave', () => { card.style.transform = ''; card.style.setProperty('--go', .6); });
+    }
+    const items = $$('#checks li');
+    new IntersectionObserver((es, o) => {
+      if (!es[0].isIntersecting) return; o.disconnect();
+      items.forEach((li, i) => setTimeout(() => li.classList.add('on'), motionOk ? 250 + i * 280 : 0));
+    }, { threshold: .4 }).observe($('#checks'));
+
+    const unlock = new Date(Date.now() + ((89 * 24 + 6) * 3600 + 1800) * 1000);
+    $('#unlockAt').textContent = unlock.toLocaleString(undefined, { dateStyle: 'medium', timeStyle: 'short' }) + ' · ' + unlock.toISOString().slice(0, 16).replace('T', ' ') + ' UTC';
+    const cd = {}; $$('#countdown b').forEach(b => cd[b.dataset.k] = b);
+    const pad = n => String(n).padStart(2, '0');
+    const tick = () => {
+      let s = Math.max(0, Math.floor((unlock - Date.now()) / 1000));
+      cd.d.textContent = pad(Math.floor(s / 86400)); s %= 86400;
+      cd.h.textContent = pad(Math.floor(s / 3600)); s %= 3600;
+      cd.m.textContent = pad(Math.floor(s / 60)); cd.s.textContent = pad(s % 60);
+    };
+    tick(); setInterval(tick, 1000);
+  })();
+
+  // ---------- Spotlight bento ----------
+  $$('.spot').forEach(el => el.addEventListener('pointermove', e => {
+    const r = el.getBoundingClientRect();
+    el.style.setProperty('--mx', (e.clientX - r.left) + 'px'); el.style.setProperty('--my', (e.clientY - r.top) + 'px');
+  }));
+
+  // ---------- Typing terminal ----------
+  (() => {
+    const body = $('#termBody');
+    const scenes = [
+      { cmd: 'hypeflow claimable --id 1', out: [['d', 'reading position #1 on chain 99801…'], ['v', 'mode        linear · cliff passed'], ['v', 'vested      12,500,000 / 25,000,000'], ['v', 'claimed      5,000,000'], ['p', 'claimable    7,500,000']] },
+      { cmd: 'hypeflow claim --id 1', out: [['d', 'caller is the recorded beneficiary ✓'], ['d', 'sending tx…'], ['v', 'tx confirmed'], ['p', '✓ 7,500,000 claimed to beneficiary'], ['d', 'proof page updated with claim tx']] }
+    ];
+    const wait = ms => new Promise(r => setTimeout(r, motionOk ? ms : 0));
+    const line = html => { const s = document.createElement('span'); s.className = 'term-line'; s.innerHTML = html; body.appendChild(s); return s; };
+    async function play(sc) {
+      const l = line('<span class="p">$ </span><span class="v"></span><span class="cursor"></span>'), v = l.querySelector('.v');
+      for (const ch of sc.cmd) { v.textContent += ch; await wait(38); }
+      l.querySelector('.cursor').remove(); await wait(350);
+      for (const [c, t] of sc.out) { line(`<span class="${c}">${t}</span>`); await wait(260); }
+    }
+    let started = false;
+    const tio = new IntersectionObserver(async es => {
+      if (!es[0].isIntersecting || started) return;
+      started = true; tio.disconnect();
+      let i = 0;
+      while (true) { body.innerHTML = ''; await play(scenes[i]); i = (i + 1) % scenes.length; await wait(2800); if (!motionOk) break; }
+    }, { threshold: .3 });
+    tio.observe($('#term'));
+  })();
+})();
+</script>
+</body>
+</html>
