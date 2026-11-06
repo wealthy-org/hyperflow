@@ -17,7 +17,7 @@
 .lbl{font-family:var(--mono);font-size:10.5px;letter-spacing:.16em;text-transform:uppercase;color:var(--muted)}
 .mono{font-family:var(--mono)}
 .dim{color:var(--faint)}
-.hot{color:var(--mint);text-shadow:0 0 18px rgba(151,247,219,.35)}
+.hot{color:var(--mint);font-weight:600}
 .link{color:var(--mint);text-decoration:underline;text-underline-offset:3px;text-decoration-color:rgba(151,247,219,.35);background:none;border:0;cursor:pointer;font:inherit}
 .link:hover{text-decoration-color:var(--mint)}
 code{font-family:var(--mono);font-size:.9em;color:var(--mint)}
@@ -225,7 +225,7 @@ button.acct-row:hover{background:rgba(151,247,219,.06)}
   mask-image:linear-gradient(180deg,#000 70%,transparent);-webkit-mask-image:linear-gradient(180deg,#000 70%,transparent)}
 .ghost-top{display:flex;justify-content:space-between;align-items:center}
 .ghost-tag{font-family:var(--mono);font-size:10px;letter-spacing:.12em;text-transform:uppercase;color:var(--faint);border:1px solid var(--line);border-radius:999px;padding:3px 9px}
-.ghost-num{font-size:44px;font-weight:600;letter-spacing:-.05em;margin:6px 0 20px;color:var(--mint);text-shadow:0 0 30px rgba(151,247,219,.35)}
+.ghost-num{font-size:44px;font-weight:600;letter-spacing:-.05em;margin:6px 0 20px;color:var(--mint)}
 .ghost-num small{font-size:.32em;font-family:var(--mono);font-weight:400;color:var(--muted);letter-spacing:.04em;margin-left:8px}
 .ghost-row{display:grid;grid-template-columns:auto 1fr auto;align-items:center;gap:14px;padding:14px 0;border-top:1px solid var(--line);animation:rise .9s var(--ease-out) both}
 .ghost-mid{display:flex;flex-direction:column;gap:8px}

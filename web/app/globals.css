@@ -212,7 +212,7 @@ input[type=range]::-moz-range-thumb{width:16px;height:16px;border-radius:50%;bac
 .readout div{border:1px solid var(--line);border-radius:14px;padding:14px;background:rgba(2,11,10,.4)}
 .readout span{display:block;font-family:var(--mono);font-size:9.5px;letter-spacing:.14em;text-transform:uppercase;color:var(--faint)}
 .readout b{display:block;font-family:var(--mono);font-weight:500;font-size:clamp(16px,2vw,24px);margin-top:4px;font-variant-numeric:tabular-nums}
-.readout .hl b{color:var(--mint);text-shadow:0 0 20px rgba(151,247,219,.4)}
+.readout .hl b{color:var(--mint)}
 #chart{width:100%;height:auto;overflow:visible;cursor:ew-resize;touch-action:none}
 #chart .ax{font-family:var(--mono);font-size:11px;fill:var(--faint)}
 #chart .gl{stroke:rgba(151,247,219,.07)}
