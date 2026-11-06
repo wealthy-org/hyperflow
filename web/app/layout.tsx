@@ -9,7 +9,14 @@ const serif = Instrument_Serif({ subsets: ["latin"], variable: "--font-serif", w
 export const metadata: Metadata = {
   title: "Hypeflow",
   description: "Hypeflow brings token locks, vesting, and streaming to Elysium. Set an unlock schedule and share the onchain proof.",
-  icons: { icon: "/logo.jpeg" },
+  icons: {
+    icon: [
+      { url: "/favicon.ico", sizes: "any" },
+      { url: "/icon-32.png", type: "image/png", sizes: "32x32" },
+      { url: "/icon-192.png", type: "image/png", sizes: "192x192" },
+    ],
+    apple: "/apple-touch-icon.png",
+  },
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {

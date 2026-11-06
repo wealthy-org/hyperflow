@@ -1,9 +1,11 @@
 import Image from "next/image";
+import Link from "next/link";
 import { Arrow, Eyebrow, SplitHeading } from "../ui";
 
 export function Trust() {
   return (
     <section id="trust" style={{ paddingTop: 0 }}>
+      <div className="glow" style={{ width: 750, height: 750, left: "50%", top: 0, transform: "translateX(-50%)" }} />
       <div className="wrap">
         <div className="sec-head">
           <div>
@@ -44,7 +46,7 @@ export function Trust() {
   );
 }
 
-const faqs: [string, string][] = [
+export const faqs: [string, string][] = [
   ["Which tokens can I lock?", "Standard ERC‑20 tokens with fixed balances and transfer amounts. Fee-on-transfer tokens are rejected and rebasing tokens aren't supported. To lock HYPE, wrap it to WHYPE using the official address for the active network."],
   ["What does it cost?", "The app fee is zero during the pilot. You only pay network gas in HYPE."],
   ["Can I cancel or change a lock?", "No. Once a position is created, its schedule and beneficiary are fixed. That's what makes the proof worth sharing."],
@@ -101,13 +103,13 @@ export function Footer() {
       <div className="wrap">
         <div className="foot">
           <div>
-            <a className="brand" href="#"><Image src="/logo.jpeg" alt="" width={30} height={30} />Hypeflow</a>
+            <Link className="brand" href="/"><Image src="/logo.jpeg" alt="" width={30} height={30} />Hypeflow</Link>
             <p style={{ marginTop: 14, maxWidth: 300 }}>Token locks, vesting, and streaming on Elysium.</p>
           </div>
           <div className="foot-cols">
-            <div><span>Product</span><a href="#how">How it works</a><a href="#modes">Lock &amp; vest</a><a href="#proof">Proof</a></div>
+            <div><span>Product</span><Link href="/#how">How it works</Link><Link href="/#modes">Lock &amp; vest</Link><Link href="/#proof">Proof</Link></div>
             <div><span>Ecosystem</span><a href="https://elysium.kinetiq.xyz/docs/connecting-to-elysium" target="_blank" rel="noopener">Elysium</a><a href="https://app.ascendlaunch.xyz/" target="_blank" rel="noopener">Ascend</a></div>
-            <div><span>Help</span><a href="#faq">FAQ</a></div>
+            <div><span>Help</span><Link href="/#faq">FAQ</Link><a href="/docs">Docs</a></div>
           </div>
         </div>
         <div className="wordmark" aria-hidden="true">Hypeflow</div>

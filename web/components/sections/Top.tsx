@@ -1,16 +1,18 @@
 import Image from "next/image";
+import Link from "next/link";
 import { Arrow } from "../ui";
 
 export function Nav() {
   return (
     <nav className="fx" aria-label="Main">
       <div className="nav-pill">
-        <a className="brand" href="#"><Image src="/logo.jpeg" alt="" width={30} height={30} priority />Hypeflow</a>
+        <Link className="brand" href="/"><Image src="/logo.jpeg" alt="" width={30} height={30} priority />Hypeflow</Link>
         <div className="nav-links">
-          <a href="#how">How it works</a>
-          <a href="#modes">Lock &amp; vest</a>
-          <a href="#proof">Proof</a>
-          <a href="#faq">FAQ</a>
+          <Link href="/#how">How it works</Link>
+          <Link href="/#modes">Lock &amp; vest</Link>
+          <Link href="/#proof">Proof</Link>
+          <Link href="/#faq">FAQ</Link>
+          <a href="/docs">Docs</a>
         </div>
         <a className="btn btn-primary" href="/app">Launch app <Arrow /></a>
       </div>

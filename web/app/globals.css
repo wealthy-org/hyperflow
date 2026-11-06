@@ -9,7 +9,14 @@
 }
 *{box-sizing:border-box;margin:0;padding:0}
 html{scroll-behavior:smooth;-webkit-text-size-adjust:100%}
-body{background:var(--bg);color:var(--text);font-family:var(--sans);font-size:15px;line-height:1.6;overflow-x:hidden;-webkit-font-smoothing:antialiased}
+body{
+  /* Same base tone as the hero (.hx2's own background): no seam where the hero ends. A tiled
+     glow pattern was tried here, but any tile that fades fully to transparent before its edge
+     reads as a repeating band once it restarts at the next tile, no matter how smooth the math
+     is underneath. Lightness below the hero comes only from each section's own one-off .glow
+     element instead (see HowItWorks/Modes/Proof/Trust), which has no repeat boundary to show. */
+  background:var(--bg);
+  color:var(--text);font-family:var(--sans);font-size:15px;line-height:1.6;overflow-x:hidden;-webkit-font-smoothing:antialiased}
 a{color:inherit;text-decoration:none}
 img,svg,canvas{display:block;max-width:100%}
 button{font:inherit;color:inherit;background:none;border:0;cursor:pointer}
@@ -108,7 +115,7 @@ a.go:hover{border-color:var(--mint);color:var(--mint)}
 
 /* ================= SECTIONS ================= */
 section{position:relative;padding:clamp(100px,14vw,180px) 0}
-.glow{position:absolute;pointer-events:none;border-radius:50%;filter:blur(80px);opacity:.5;background:radial-gradient(circle,rgba(151,247,219,.22),transparent 65%)}
+.glow{position:absolute;pointer-events:none;border-radius:50%;filter:blur(90px);opacity:.75;background:radial-gradient(circle,rgba(151,247,219,.3),transparent 65%)}
 .sec-head{display:grid;gap:28px;margin-bottom:clamp(48px,7vw,88px)}
 @media(min-width:960px){.sec-head{grid-template-columns:1.4fr .8fr;align-items:end}}
 
@@ -292,6 +299,62 @@ input[type=range]::-moz-range-thumb{width:16px;height:16px;border-radius:50%;bac
 .faq details[open] .ans{grid-template-rows:1fr}
 .faq .ans>div{overflow:hidden}
 .faq .ans p{color:var(--muted);padding:0 60px 26px 0;font-size:15px}
+
+/* ================= DOCS ================= */
+.doc-page{padding-top:140px}
+.doc-head{max-width:720px;padding-bottom:40px;border-bottom:1px solid var(--line)}
+.doc-head h1{font-size:clamp(36px,5vw,56px);font-weight:600;letter-spacing:-.04em;margin-top:18px}
+.doc-head p{color:var(--muted);margin-top:16px;font-size:16px}
+.doc-grid{display:grid;grid-template-columns:minmax(0,1fr);gap:clamp(32px,5vw,80px);padding:48px var(--gutter) 120px}
+.doc-side{position:sticky;top:120px;align-self:start;display:none}
+.doc-side-lbl{display:block;font-family:var(--mono);font-size:10.5px;letter-spacing:.16em;text-transform:uppercase;color:var(--faint);margin-bottom:14px}
+.doc-side ul{list-style:none;display:grid;gap:2px;border-left:1px solid var(--line)}
+.doc-side a{display:block;padding:7px 0 7px 16px;margin-left:-1px;border-left:1px solid transparent;font-size:13.5px;color:var(--muted);transition:color .2s,border-color .2s}
+.doc-side a:hover{color:var(--text)}
+.doc-side a.on{color:var(--mint);border-color:var(--mint)}
+.doc-content{min-width:0;max-width:760px}
+.doc-sec{padding:56px 0;border-bottom:1px solid var(--line)}
+.doc-sec.last{border-bottom:0}
+.doc-sec:first-child{padding-top:0}
+.doc-n{font-family:var(--mono);font-size:12px;color:var(--mint);letter-spacing:.1em}
+.doc-sec h2{font-size:clamp(22px,2.6vw,30px);font-weight:600;letter-spacing:-.03em;margin:8px 0 18px}
+.doc-sec p{color:var(--text-2);font-size:15px;line-height:1.7;margin-bottom:14px}
+.doc-sec p:last-child{margin-bottom:0}
+.doc-sec code{font-family:var(--mono);font-size:.88em;color:var(--mint);background:rgba(151,247,219,.08);padding:1px 6px;border-radius:5px}
+.doc-note{font-size:13.5px!important;color:var(--muted)!important;border-left:2px solid var(--line-2);padding-left:14px!important}
+.doc-note code{display:inline-block;margin-top:2px}
+.doc-steps,.doc-list{display:grid;gap:12px;margin:18px 0;color:var(--text-2);font-size:15px}
+.doc-steps{list-style:none;counter-reset:ds}
+.doc-steps li{counter-increment:ds;display:flex;gap:14px;line-height:1.6}
+.doc-steps li::before{content:counter(ds);flex:none;width:24px;height:24px;border-radius:50%;background:rgba(151,247,219,.1);border:1px solid var(--line-2);display:grid;place-items:center;font-family:var(--mono);font-size:11.5px;color:var(--mint);margin-top:1px}
+.doc-list{list-style:none}
+.doc-list li{display:flex;gap:10px;line-height:1.6}
+.doc-list li::before{content:"";flex:none;width:6px;height:6px;margin-top:8px;border-radius:2px;background:var(--mint);transform:rotate(45deg)}
+.doc-table{border:1px solid var(--line);border-radius:14px;overflow:hidden;margin:18px 0}
+.doc-tr{display:grid;grid-template-columns:1fr 1fr;border-top:1px solid var(--line)}
+.doc-table .doc-tr:first-child{border-top:0}
+.doc-tr>span{padding:13px 16px;font-size:13.5px;word-break:break-word}
+.doc-tr>span:first-child{color:var(--muted);background:rgba(151,247,219,.03);font-family:var(--mono);font-size:12.5px}
+.doc-tr>span:not(:first-child){color:var(--text-2)}
+.doc-tr>span a{color:var(--mint);text-decoration:underline;text-decoration-color:rgba(151,247,219,.35);text-underline-offset:3px;overflow-wrap:anywhere}
+.doc-th{background:rgba(151,247,219,.04)}
+.doc-th>span{font-family:var(--mono);font-size:10.5px;letter-spacing:.1em;text-transform:uppercase;color:var(--faint)!important;background:none!important}
+.doc-table:has(.doc-th) .doc-tr{grid-template-columns:repeat(3,1fr)}
+.doc-fns{display:grid;gap:10px}
+.doc-fn{border:1px solid var(--line);border-radius:12px;padding:16px 18px;display:grid;gap:8px}
+.doc-fn .fn-kind{justify-self:start;font-family:var(--mono);font-size:9.5px;letter-spacing:.12em;text-transform:uppercase;padding:3px 9px;border-radius:999px;border:1px solid var(--line-2);color:var(--text-2)}
+.doc-fn .fn-kind.k-write{color:var(--bg);background:var(--mint);border-color:var(--mint)}
+.doc-fn .fn-kind.k-event{color:#F5E3BD;border-color:rgba(247,214,151,.35)}
+.doc-fn code{font-family:var(--mono);font-size:12.5px;color:var(--text);background:none;padding:0;overflow-wrap:anywhere}
+.doc-fn p{font-size:13.5px;color:var(--muted);margin:0}
+.doc-faq details{border-top:1px solid var(--line);padding:16px 0}
+.doc-faq details:last-child{border-bottom:1px solid var(--line)}
+.doc-faq summary{cursor:pointer;font-size:15px;font-weight:500;color:var(--text);list-style:none}
+.doc-faq summary::-webkit-details-marker{display:none}
+.doc-faq summary:hover{color:var(--mint)}
+.doc-faq p{color:var(--muted);font-size:14px;margin-top:10px}
+@media(min-width:900px){.doc-side{display:block}.doc-grid{grid-template-columns:220px minmax(0,1fr)}}
+@media(max-width:640px){.doc-tr,.doc-table:has(.doc-th) .doc-tr{grid-template-columns:1fr}.doc-tr>span:first-child{border-bottom:1px solid var(--line)}}
 
 /* ================= CTA + FOOTER ================= */
 .cta{position:relative;border-radius:36px;overflow:hidden;border:1px solid var(--line-2);min-height:560px;display:flex;align-items:center;justify-content:center;text-align:center;padding:80px var(--gutter);isolation:isolate}
