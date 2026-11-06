@@ -3,12 +3,20 @@ import type { ReactNode } from "react";
 /** Heading whose words rise out of a mask when scrolled into view (driven by LandingEffects). */
 export function SplitHeading({ text, em, as: Tag = "h2" }: { text: string; em?: string; as?: "h2" | "h1" }) {
   let i = 0;
+  // The gap between words must sit *outside* .w: .w is an overflow-hidden inline-block (for the
+  // slide-up mask), and a browser trims whitespace at the edge of an inline-block box, so a
+  // trailing space placed inside .w silently disappears and words run together.
   const words = (s: string) =>
-    s.split(/\s+/).filter(Boolean).map((w) => (
-      <span key={i} className="w">
-        <span style={{ transitionDelay: `${i++ * 70}ms` }}>{w}</span>{" "}
-      </span>
-    ));
+    s.split(/\s+/).filter(Boolean).flatMap((w) => {
+      const key = i;
+      const delay = i++ * 70;
+      return [
+        <span key={key} className="w">
+          <span style={{ transitionDelay: `${delay}ms` }}>{w}</span>
+        </span>,
+        " ",
+      ];
+    });
   return (
     <Tag className="h2 split" aria-label={em ? `${text} ${em}` : text}>
       <span aria-hidden="true">

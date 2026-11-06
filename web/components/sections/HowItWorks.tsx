@@ -15,7 +15,7 @@ export function HowItWorks() {
           <div className="wrap scrolly-grid">
             <div>
               <Eyebrow>How it works</Eyebrow>
-              <SplitHeading text="Launch. Lock." em="Prove it." />
+              <SplitHeading text="Launch. Lock." em="Prove." />
               <div className="steps-list" id="stepsList">
                 <div className="rail"><i id="railFill" /></div>
                 <ol style={{ listStyle: "none" }}>
