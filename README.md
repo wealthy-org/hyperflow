@@ -10,7 +10,6 @@ First flow: launch a token on [Ascend](https://app.ascendlaunch.xyz/) with a dev
 |---|---|
 | `contracts/` | `HypeflowEscrow` (Solidity, Foundry, OpenZeppelin). Hard lock + linear vesting with cliff, beneficiary-only claims. No admin, no fee, not upgradeable. |
 | `web/` | Next.js app: landing page, `/app` (positions), `/app/create`, `/proof/[chainId]/[id]`. wagmi + viem + RainbowKit. |
-| `landing/` | Original static landing page prototype. |
 
 ## Contracts
 
